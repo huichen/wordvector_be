@@ -55,24 +55,24 @@ go build
 {
   "keywords": [
     {
-      "word": "皮肤补水",
+      "word": "美白",
       "similarity": 1
     },
     {
-      "word": "肌肤补水",
-      "similarity": 0.9340592
+      "word": "淡斑",
+      "similarity": 0.8916605
     },
     {
-      "word": "补水",
-      "similarity": 0.8877853
+      "word": "美白产品",
+      "similarity": 0.8722978
     },
     {
-      "word": "补水保湿",
-      "similarity": 0.8768645
+      "word": "美白效果",
+      "similarity": 0.8654123
     },
     {
-      "word": "脸部补水",
-      "similarity": 0.86291945
+      "word": "想美白",
+      "similarity": 0.86464494
     },
 ...
 ```
