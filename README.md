@@ -78,3 +78,12 @@ go build
 ```
 
 更多函数见 main.go 代码中的注释。
+
+## 参数调优
+
+你可能发现了，这个程序返回的相似词和腾讯官方的例子略有不同，因为我们用的是相似紧邻算法，不保证 100% 的召回率。主要有以下参数可以调整
+
+* numTrees: [gen_annoy_index/main.go](https://github.com/huichen/wordvector_be/blob/master/gen_annoy_index/main.go)，近似最近邻计算需要的随机森林中树的个数，树越多召回率越高，但也意味更久的建树时间（一次性）和请求延迟
+* kSearch: [main.go](https://github.com/huichen/wordvector_be/blob/master/main.go)，搜索栈长度，这个值越大则请求耗时越长，但召回率越高
+
+在程序中默认使用 numTrees = 10 和 kSearch = 10000 两个参数，可以得到不错的召回率，压测 100 并发 http 请求的情况下，延迟平均 76 毫秒方差 65 毫秒。如果你有更充足的时间，可以增加 numTrees 延长建树的时间；如果你对服务的并发和延迟有更高要求，可以适当降低 kSearch，不过这样做也会降低召回率。请根据业务需求做适当的权衡。
