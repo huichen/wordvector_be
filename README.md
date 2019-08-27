@@ -20,6 +20,7 @@ cd $GOPATH/src/annoyindex
 go get github.com/huichen/wordvector_be
 cd $GOPATH/src/github.com/huichen/wordvector_be
 mkdir data
+cd data/
 aria2c -c https://ai.tencent.com/ailab/nlp/data/Tencent_AILab_ChineseEmbedding.tar.gz
 tar zxvf https://ai.tencent.com/ailab/nlp/data/Tencent_AILab_ChineseEmbedding.tar.gz
 ```
