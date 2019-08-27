@@ -20,6 +20,8 @@ import (
 
 const (
 	vecDim = 200
+	kSearch = 10000
+	defaultNumReturnKeywords = 10
 )
 
 var (
@@ -95,7 +97,7 @@ func getSimilarKeyword(w http.ResponseWriter, r *http.Request) {
 	num, ok := r.URL.Query()["num"]
 	var numKeywords int
 	if !ok || len(num) != 1 {
-		numKeywords = 10
+		numKeywords = defaultNumReturnKeywords
 	} else {
 		var err error
 		numKeywords, err = strconv.Atoi(num[0])
@@ -123,7 +125,7 @@ func getSimilarKeyword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var result []int
-	annoyIndex.GetNnsByVector(wordVec, numKeywords, -1, &result)
+	annoyIndex.GetNnsByVector(wordVec, numKeywords, kSearch, &result)
 	var sim SimilarKeywordResponse
 	for _, k := range result {
 		keyword, err := dbIndexToKeyword.Get(util.Uint32bytes(uint32(k)), nil)
