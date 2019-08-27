@@ -38,7 +38,7 @@ go run main.go
 go run main.go
 ```
 
-不到 30 分钟后，索引文件生成在 data/tencent_embedding.ann。annoy 索引的 key 是整数 id，不包括关键词和 id 之间的映射关系，这个关系放在了 data/tencent_embedding_index_to_keyword.db 和 data/tencent_embedding_keyword_to_index.db 两个 leveldb 数据库备用。
+你的电脑要有 10G 左右内存。不到 30 分钟后，索引文件生成在 data/tencent_embedding.ann。annoy 索引的 key 是整数 id，不包括关键词和 id 之间的映射关系，这个关系放在了 data/tencent_embedding_index_to_keyword.db 和 data/tencent_embedding_keyword_to_index.db 两个 leveldb 数据库备用。
 
 ## 使用
 
