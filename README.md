@@ -38,7 +38,7 @@ go run main.go
 go run main.go
 ```
 
-不到 30 分钟后，索引文件生成在 data/tencent_embedding.ann。annoy 索引的 key 是整数 id，不包括关键词和 id 之间的映射关系，这个关系放在了 data/tencent_embedding_index_to_keyword.db 和 data/tencent_embedding_keyword_to_index.db 两个 leveldb 数据库备用。
+你的电脑要有 10G 左右内存。不到 30 分钟后，索引文件生成在 data/tencent_embedding.ann。annoy 索引的 key 是整数 id，不包括关键词和 id 之间的映射关系，这个关系放在了 data/tencent_embedding_index_to_keyword.db 和 data/tencent_embedding_keyword_to_index.db 两个 leveldb 数据库备用。
 
 ## 使用
 
@@ -55,24 +55,24 @@ go build
 {
   "keywords": [
     {
-      "word": "皮肤补水",
+      "word": "美白",
       "similarity": 1
     },
     {
-      "word": "肌肤补水",
-      "similarity": 0.9340592
+      "word": "淡斑",
+      "similarity": 0.8916605
     },
     {
-      "word": "补水",
-      "similarity": 0.8877853
+      "word": "美白产品",
+      "similarity": 0.8722978
     },
     {
-      "word": "补水保湿",
-      "similarity": 0.8768645
+      "word": "美白效果",
+      "similarity": 0.8654123
     },
     {
-      "word": "脸部补水",
-      "similarity": 0.86291945
+      "word": "想美白",
+      "similarity": 0.86464494
     },
 ...
 ```
