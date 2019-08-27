@@ -69,6 +69,6 @@ func main() {
 	log.Printf("start building")
 	t.Build(10)
 	log.Printf("finished building")
-	t.Save("tencent_embedding.ann")
+	t.Save("../data/tencent_embedding.ann")
 	log.Printf("finished saving")
 }

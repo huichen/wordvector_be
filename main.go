@@ -119,12 +119,12 @@ func getSimilarKeyword(w http.ResponseWriter, r *http.Request) {
 }
 
 type SimilarKeywordResponse struct {
-	Keywords []Keyword
+	Keywords []Keyword `json:"keywords"`
 }
 
 type Keyword struct {
-	Word       string
-	Similarity float32
+	Word       string  `json:"word"`
+	Similarity float32 `json:"similarity"`
 }
 
 func getCosineSimilarity(i, j int) float32 {
