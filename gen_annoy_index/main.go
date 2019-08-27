@@ -9,6 +9,11 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
+const (
+	dimVec = 200
+	numTrees = 10
+)
+
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Llongfile)
 
@@ -35,7 +40,7 @@ func main() {
 
 	log.Printf("start loading data")
 	count := 0
-	t := annoyindex.NewAnnoyIndexAngular(200)
+	t := annoyindex.NewAnnoyIndexAngular(dimVec)
 	iter := dbWordVector.NewIterator(nil, nil)
 	for iter.Next() {
 		value := iter.Value()
@@ -43,7 +48,7 @@ func main() {
 			log.Printf("#records loaded = %d", count)
 		}
 		v := []float32{}
-		for i := 0; i < 200; i++ {
+		for i := 0; i < dimVec; i++ {
 			e := util.Float32frombytes(value[i*4 : (i+1)*4])
 			v = append(v, e)
 		}
@@ -67,8 +72,9 @@ func main() {
 	log.Printf("finished loading data")
 
 	log.Printf("start building")
-	t.Build(10)
+	t.Build(numTrees)  // 更多的树意味着更高精度，但建造时间也更长
 	log.Printf("finished building")
+
 	t.Save("../data/tencent_embedding.ann")
 	log.Printf("finished saving")
 }
