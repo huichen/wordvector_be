@@ -21,12 +21,14 @@ import (
 const (
 	vecDim                   = 200
 	kSearch                  = 10000
+
 	defaultNumReturnKeywords = 10
 	maxNumReturnKeywords     = 100
 )
 
 var (
 	port = flag.String("port", ":3721", "")
+	httpPathPrefix = flag.String("http_path_prefix", "", "")
 
 	dbIndexToKeyword *leveldb.DB
 	dbKeywordToIndex *leveldb.DB
@@ -53,10 +55,10 @@ func main() {
 	annoyIndex = annoyindex.NewAnnoyIndexAngular(vecDim)
 	annoyIndex.Load("data/tencent_embedding.ann")
 
-	http.HandleFunc("/get.similar.keywords/", getSimilarKeyword)
-	http.HandleFunc("/get.similar.keywords.from.vector/", getSimilarKeywordFromVector)
-	http.HandleFunc("/get.word.vector/", getWordVector)
-	http.HandleFunc("/get.similarity.score/", getSimilarityScore)
+	http.HandleFunc(fmt.Sprintf("%s/get.similar.keywords/", *httpPathPrefix), getSimilarKeyword)
+	http.HandleFunc(fmt.Sprintf("%s/get.similar.keywords.from.vector/", *httpPathPrefix), getSimilarKeywordFromVector)
+	http.HandleFunc(fmt.Sprintf("%s/get.word.vector/", *httpPathPrefix), getWordVector)
+	http.HandleFunc(fmt.Sprintf("%s/get.similarity.score/", *httpPathPrefix), getSimilarityScore)
 	go func() {
 		if err := http.ListenAndServe(*port, nil); err != nil {
 			panic(err)
@@ -154,8 +156,8 @@ func getSimilarKeyword(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(200)
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Write(data)
 }
 
@@ -219,8 +221,8 @@ func getSimilarKeywordFromVector(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(200)
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Write(data)
 }
 
@@ -267,7 +269,7 @@ func getWordVector(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(200)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
 }
@@ -317,8 +319,8 @@ func getSimilarityScore(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(200)
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Write(data)
 }
 
