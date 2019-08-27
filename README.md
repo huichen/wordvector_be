@@ -1,4 +1,5 @@
 # wordvector_be
+
 这个项目用 go 语言实现了一个 HTTP 服务，使用腾讯 800 万词的 [word vector 模型](https://ai.tencent.com/ailab/zh/news/detial?id=22) 得到相似关键词和关键词的cosine similarity。索引使用了 spotify 的 [annoy](https://github.com/spotify/annoy) 引擎。
 
 ## 安装
@@ -37,7 +38,7 @@ go run main.go
 go run main.go
 ```
 
-大概需要不到 30 分钟后，索引文件生成在 data/tencent_embedding.ann。annoy 索引的 key 是整数 id，不包括关键词和 id 之间的映射关系，这个关系放在了 data/tencent_embedding_index_to_keyword.db 和 data/tencent_embedding_keyword_to_index.db 两个 leveldb 数据库备用。
+不到 30 分钟后，索引文件生成在 data/tencent_embedding.ann。annoy 索引的 key 是整数 id，不包括关键词和 id 之间的映射关系，这个关系放在了 data/tencent_embedding_index_to_keyword.db 和 data/tencent_embedding_keyword_to_index.db 两个 leveldb 数据库备用。
 
 ## 使用
 
@@ -48,7 +49,7 @@ go build
 ./wordvector_be
 ```
 
-在浏览器打开 http://localhost:3721/get.similar.keywords/?keyword=美白&num=20 ，返回如下，word 字段是关键词，similarity 是关键词词向量之间的 consine similarity，余额接近于 1 越相似。
+在浏览器打开 http://localhost:3721/get.similar.keywords/?keyword=美白&num=20 ，返回如下，word 字段是关键词，similarity 是关键词词向量之间的 consine similarity，约接近 1 越相似。
 
 ```
 {
