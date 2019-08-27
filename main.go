@@ -19,9 +19,10 @@ import (
 )
 
 const (
-	vecDim = 200
-	kSearch = 10000
+	vecDim                   = 200
+	kSearch                  = 10000
 	defaultNumReturnKeywords = 10
+	maxNumReturnKeywords     = 100
 )
 
 var (
@@ -53,6 +54,7 @@ func main() {
 	annoyIndex.Load("data/tencent_embedding.ann")
 
 	http.HandleFunc("/get.similar.keywords/", getSimilarKeyword)
+	http.HandleFunc("/get.similar.keywords.from.vector/", getSimilarKeywordFromVector)
 	http.HandleFunc("/get.word.vector/", getWordVector)
 	http.HandleFunc("/get.similarity.score/", getSimilarityScore)
 	go func() {
@@ -107,6 +109,11 @@ func getSimilarKeyword(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	if numKeywords <= 0 {
+		numKeywords = defaultNumReturnKeywords
+	} else if numKeywords > maxNumReturnKeywords {
+		numKeywords = maxNumReturnKeywords
+	}
 
 	wordVec := make([]float32, vecDim)
 	for _, k := range key {
@@ -122,6 +129,71 @@ func getSimilarKeyword(w http.ResponseWriter, r *http.Request) {
 		for i, v := range wv {
 			wordVec[i] = wordVec[i] + v
 		}
+	}
+
+	var result []int
+	annoyIndex.GetNnsByVector(wordVec, numKeywords, kSearch, &result)
+	var sim SimilarKeywordResponse
+	for _, k := range result {
+		keyword, err := dbIndexToKeyword.Get(util.Uint32bytes(uint32(k)), nil)
+		if err != nil {
+			log.Printf("%s", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		similarityScore := getCosineSimilarityByVector(wordVec, k)
+		sim.Keywords = append(sim.Keywords, Keyword{
+			Word:       string(keyword),
+			Similarity: similarityScore,
+		})
+	}
+
+	data, err := json.Marshal(sim)
+	if err != nil {
+		log.Printf("%s", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(200)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
+}
+
+/*
+	从一个或者多个关键词找相似词
+	HTTP POST 请求参数
+	/get.similar.keywords.from.vector/
+	body 是 SimilarKeywordFromVectorRequest 结构体的 json
+*/
+
+type SimilarKeywordFromVectorRequest struct {
+	NumKeywords int       `json:"numKeywords"`
+	Vector      []float32 `json:"vector"`
+}
+
+func getSimilarKeywordFromVector(w http.ResponseWriter, r *http.Request) {
+	var req SimilarKeywordFromVectorRequest
+	if r.Body == nil {
+		http.Error(w, "Please send a request body", 400)
+		return
+	}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	wordVec := req.Vector
+	if len(wordVec) != vecDim {
+		http.Error(w, "vector 维度不匹配", http.StatusInternalServerError)
+		return
+	}
+
+	numKeywords := req.NumKeywords
+	if numKeywords <= 0 {
+		numKeywords = defaultNumReturnKeywords
+	} else if numKeywords > maxNumReturnKeywords {
+		numKeywords = maxNumReturnKeywords
 	}
 
 	var result []int
