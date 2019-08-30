@@ -13,31 +13,36 @@ import (
 	"strconv"
 	"syscall"
 
+	"github.com/huichen/sego"
 	"github.com/huichen/wordvector_be/util"
-
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
 const (
-	vecDim                   = 200
-	kSearch                  = 10000
+	vecDim  = 200
+	kSearch = 10000
 
 	defaultNumReturnKeywords = 10
 	maxNumReturnKeywords     = 100
 )
 
 var (
-	port = flag.String("port", ":3721", "")
+	port           = flag.String("port", ":3721", "http 服务端口")
 	httpPathPrefix = flag.String("http_path_prefix", "", "")
+	dict           = flag.String("dict", "", "sego 词典，从 github.com/huichen/sego/data/dictionary.txt 下载")
 
 	dbIndexToKeyword *leveldb.DB
 	dbKeywordToIndex *leveldb.DB
 	annoyIndex       annoyindex.AnnoyIndex
+	segmenter        sego.Segmenter
 )
 
 func main() {
 	flag.Parse()
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Llongfile)
+	if *dict != "" {
+		segmenter.LoadDictionary(*dict)
+	}
 
 	var err error
 	dbIndexToKeyword, err = leveldb.OpenFile("data/tencent_embedding_index_to_keyword.db", nil)
@@ -81,6 +86,9 @@ func main() {
 	支持多个 keyword 参数（词向量之和），num不指定的话默认10个，比如
 	/get.similar.keywords/?keyword=xxx&keyword=yyy&keyword=zzz
 
+	特殊用法：当 keyword 只有一个且是词向量表中没有的短语时，并且 --dict 参数载入了一个
+	词典，则将改 keyword 分词之后求多个分词的词向量之和的相似词
+
 */
 
 type SimilarKeywordResponse struct {
@@ -118,19 +126,35 @@ func getSimilarKeyword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wordVec := make([]float32, vecDim)
-	for _, k := range key {
-		id, err := dbKeywordToIndex.Get([]byte(k), nil)
-		if err != nil {
-			log.Printf("%s", err)
+	_, err := dbKeywordToIndex.Get([]byte(key[0]), nil)
+	if err != nil {
+		if len(key) == 1 && *dict != "" {
+			// 只有一个关键词，且不出现在向量词表的特殊情况
+			segments := segmenter.Segment([]byte(key[0]))
+			key = sego.SegmentsToSlice(segments, false)
+		} else {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+	}
+
+	validKeywords := 0
+	for _, k := range key {
+		id, err := dbKeywordToIndex.Get([]byte(k), nil)
+		if err != nil {
+			continue
+		}
+		validKeywords++
 		index := util.Uint32frombytes(id)
 		var wv []float32
 		annoyIndex.GetItem(int(index), &wv)
 		for i, v := range wv {
 			wordVec[i] = wordVec[i] + v
 		}
+	}
+	if validKeywords == 0 {
+		http.Error(w, "没有找到匹配关键词", http.StatusInternalServerError)
+		return
 	}
 
 	var result []int
@@ -325,18 +349,10 @@ func getSimilarityScore(w http.ResponseWriter, r *http.Request) {
 }
 
 func getCosineSimilarity(i, j int) float32 {
-	var vec1, vec2 []float32
-	annoyIndex.GetItem(i, &vec1)
-	annoyIndex.GetItem(j, &vec2)
+	var vec []float32
+	annoyIndex.GetItem(i, &vec)
 
-	var a, b, c float32
-	for id, v := range vec1 {
-		a = a + v*vec2[id]
-		b = b + v*v
-		c = c + vec2[id]*vec2[id]
-	}
-
-	return a / float32(math.Sqrt(float64(b))*math.Sqrt(float64(c)))
+	return getCosineSimilarityByVector(vec, j)
 }
 
 func getCosineSimilarityByVector(vec []float32, j int) float32 {
